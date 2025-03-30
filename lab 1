@@ -1,0 +1,231 @@
+import Foundation
+
+// MARK: - Point struct
+struct Point {
+    var x: Double
+    var y: Double
+}
+
+extension Point {
+    // Calculates the distance between two points.
+    func distance(to other: Point) -> Double {
+        let dx = other.x - x
+        let dy = other.y - y
+        return sqrt(dx * dx + dy * dy)
+    }
+}
+
+// MARK: - Vector struct
+struct Vector {
+    var dx: Double
+    var dy: Double
+    
+    // Initialize a vector from a start and an end point.
+    init(start: Point, end: Point) {
+        self.dx = end.x - start.x
+        self.dy = end.y - start.y
+    }
+    
+    // Additional initializer to create a vector from its components.
+    init(dx: Double, dy: Double) {
+        self.dx = dx
+        self.dy = dy
+    }
+    
+    // Returns the magnitude (length) of the vector.
+    var magnitude: Double {
+        return sqrt(dx * dx + dy * dy)
+    }
+    
+    // Computes the dot product with another vector.
+    func dot(with other: Vector) -> Double {
+        return self.dx * other.dx + self.dy * other.dy
+    }
+    
+    // Computes the angle (in radians) between two vectors.
+    func angle(with other: Vector) -> Double {
+        let m = self.magnitude * other.magnitude
+        return m == 0 ? 0 : acos(self.dot(with: other) / m)
+    }
+    
+    // Type method for a zero vector.
+    static func zero() -> Vector {
+        return Vector(dx: 0, dy: 0)
+    }
+}
+
+// MARK: - Base class Figure
+class Figure {
+    // Count of created figures.
+    static var count = 0
+    
+    var points: [Point]
+    var name: String?
+    
+    init(points: [Point], name: String? = nil) {
+        self.points = points
+        self.name = name
+        Figure.count += 1
+    }
+    
+    // Computed property for area (default 0).
+    var area: Double { return 0 }
+    // Computed property for perimeter (default 0).
+    var perimeter: Double { return 0 }
+    
+    deinit {
+        Figure.count -= 1
+    }
+}
+
+// Unknown figure type.
+class UnknownFigure: Figure { }
+
+// MARK: - Line
+class Line: Figure {
+    var start: Point { points[0] }
+    var end: Point { points[1] }
+    
+    // The vector representing the line.
+    var vector: Vector {
+        return Vector(start: start, end: end)
+    }
+    
+    // The perimeter of a line is the distance between the two points.
+    override var perimeter: Double {
+        return start.distance(to: end)
+    }
+    
+    // The area of a line is always 0.
+    override var area: Double { return 0 }
+}
+
+// MARK: - Triangle
+class Triangle: Figure {
+    // Perimeter is the sum of the lengths of the sides.
+    override var perimeter: Double {
+        return points[0].distance(to: points[1]) +
+               points[1].distance(to: points[2]) +
+               points[2].distance(to: points[0])
+    }
+    
+    // Area computed using Heron's formula.
+    override var area: Double {
+        let p = perimeter / 2
+        let a = points[0].distance(to: points[1])
+        let b = points[1].distance(to: points[2])
+        let c = points[2].distance(to: points[0])
+        return sqrt(p * (p - a) * (p - b) * (p - c))
+    }
+}
+
+// MARK: - Quadrilateral
+class Quadrilateral: Figure {
+    // Perimeter is the sum of the distances between consecutive points.
+    override var perimeter: Double {
+        var per = 0.0
+        for i in 0..<4 {
+            per += points[i].distance(to: points[(i + 1) % 4])
+        }
+        return per
+    }
+    
+    // Area calculated using the Shoelace formula.
+    override var area: Double {
+        let sum1 = points[0].x * points[1].y +
+                   points[1].x * points[2].y +
+                   points[2].x * points[3].y +
+                   points[3].x * points[0].y
+        let sum2 = points[0].y * points[1].x +
+                   points[1].y * points[2].x +
+                   points[2].y * points[3].x +
+                   points[3].y * points[0].x
+        return abs(sum1 - sum2) / 2
+    }
+}
+
+// MARK: - Additional quadrilaterals
+class Rhombus: Quadrilateral { }
+class Rectangle: Quadrilateral { }
+class Square: Rectangle { }
+
+// MARK: - Mathematics class
+class Mathematics {
+    var figures: [Figure] = []
+    
+    // Subscript for accessing figures by index.
+    subscript(index: Int) -> Figure {
+        get { figures[index] }
+        set { figures[index] = newValue }
+    }
+    
+    // Adds a figure.
+    func add(_ figure: Figure) {
+        figures.append(figure)
+    }
+    
+    var maxAreaFigure: Figure? {
+        return figures.max(by: { $0.area < $1.area })
+    }
+    var minAreaFigure: Figure? {
+        return figures.min(by: { $0.area < $1.area })
+    }
+    var maxPerimeterFigure: Figure? {
+        return figures.max(by: { $0.perimeter < $1.perimeter })
+    }
+    var minPerimeterFigure: Figure? {
+        return figures.min(by: { $0.perimeter < $1.perimeter })
+    }
+    
+    // Type method to calculate the total area of all figures.
+    static func totalArea(of figures: [Figure]) -> Double {
+        return figures.reduce(0, { $0 + $1.area })
+    }
+}
+
+// Extension for a convenient description of a figure.
+extension Figure {
+    func description() -> String {
+        return "\(name ?? "Figure") with \(points.count) points, perimeter: \(perimeter), area: \(area)"
+    }
+}
+
+// MARK: - Main program
+
+// Create some points.
+let p1 = Point(x: 0, y: 0)
+let p2 = Point(x: 3, y: 0)
+let p3 = Point(x: 3, y: 4)
+let p4 = Point(x: 0, y: 4)
+
+// Create figures.
+let line = Line(points: [p1, p2], name: "Line")
+let triangle = Triangle(points: [p1, p2, p3], name: "Triangle")
+let quadrilateral = Quadrilateral(points: [p1, p2, p3, p4], name: "Quadrilateral")
+
+// Add figures to Mathematics.
+let math = Mathematics()
+math.add(line)
+math.add(triangle)
+math.add(quadrilateral)
+
+// Output information about each figure.
+print("Figures:")
+for fig in math.figures {
+    print(fig.description())
+}
+
+// Output statistics.
+if let maxArea = math.maxAreaFigure {
+    print("Max area: \(maxArea.description())")
+}
+if let minArea = math.minAreaFigure {
+    print("Min area: \(minArea.description())")
+}
+if let maxPerimeter = math.maxPerimeterFigure {
+    print("Max perimeter: \(maxPerimeter.description())")
+}
+if let minPerimeter = math.minPerimeterFigure {
+    print("Min perimeter: \(minPerimeter.description())")
+}
+print("Total area of all figures: \(Mathematics.totalArea(of: math.figures))")
