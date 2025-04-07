@@ -1,0 +1,96 @@
+import Foundation
+
+
+enum FigureError: Error {
+    case insufficientPoints(expected: Int)
+    case invalidShape(reason: String)
+}
+
+
+struct Point {
+    var x: Double
+    var y: Double
+}
+
+
+class Figure {
+    var points: [Point]
+    var name: String
+
+    init(points: [Point], name: String) throws {
+        guard points.count >= 2 else {
+            throw FigureError.insufficientPoints(expected: 2)
+        }
+        self.points = points
+        self.name = name
+    }
+
+    func area() throws -> Double { return 0 }
+    func perimeter() throws -> Double { return 0 }
+}
+
+
+class Line: Figure {
+    override func perimeter() throws -> Double {
+        return distance(points[0], points[1])
+    }
+}
+
+
+class Triangle: Figure {
+    override init(points: [Point], name: String = "Triangle") throws {
+        guard points.count == 3 else {
+            throw FigureError.insufficientPoints(expected: 3)
+        }
+        try super.init(points: points, name: name)
+    }
+
+    override func area() throws -> Double {
+        let a = distance(points[0], points[1])
+        let b = distance(points[1], points[2])
+        let c = distance(points[2], points[0])
+        let s = (a + b + c) / 2
+        return sqrt(s * (s - a) * (s - b) * (s - c))
+    }
+
+    override func perimeter() throws -> Double {
+        return distance(points[0], points[1]) +
+               distance(points[1], points[2]) +
+               distance(points[2], points[0])
+    }
+}
+
+
+func describeFigures<T: Figure>(_ figures: [T]) {
+    for figure in figures {
+        do {
+            let area = try figure.area()
+            let perimeter = try figure.perimeter()
+            print("\(figure.name): Area = \(area), Perimeter = \(perimeter)")
+        } catch {
+            print("Error describing figure \(figure.name): \(error)")
+        }
+    }
+}
+
+
+func distance(_ p1: Point, _ p2: Point) -> Double {
+    let dx = p2.x - p1.x
+    let dy = p2.y - p1.y
+    return sqrt(dx * dx + dy * dy)
+}
+
+
+do {
+    let p1 = Point(x: 0, y: 0)
+    let p2 = Point(x: 3, y: 0)
+    let p3 = Point(x: 3, y: 4)
+
+    let line = try Line(points: [p1, p2], name: "Line")
+    let triangle = try Triangle(points: [p1, p2, p3])
+
+    let figures: [Figure] = [line, triangle]
+    describeFigures(figures)
+} catch {
+    print("Initialization error: \(error)")
+}
