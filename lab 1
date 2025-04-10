@@ -1,4 +1,4 @@
-import Foundation
+import Foundation // DONE
 
 // MARK: - Point struct
 struct Point {
